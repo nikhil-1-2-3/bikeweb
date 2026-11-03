@@ -1,4 +1,4 @@
-name: CI/CD - Build & Publish Container Images
+name: CI/CD - Build and Publish Container Images
 
 on:
   push:
@@ -13,41 +13,7 @@ env:
   OWNER: nikhil-1-2-3
 
 jobs:
-  # ── 1. Detect Changes per Service ──────────────────────────────────────────
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      frontend: ${{ steps.filter.outputs.frontend }}
-      gateway:  ${{ steps.filter.outputs.gateway }}
-      auth:     ${{ steps.filter.outputs.auth }}
-      bikes:    ${{ steps.filter.outputs.bikes }}
-      booking:  ${{ steps.filter.outputs.booking }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Check for Changed Files
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            frontend:
-              - 'frontend/**'
-              - '.github/workflows/ci-cd.yml'
-            gateway:
-              - 'backend/api-gateway/**'
-              - '.github/workflows/ci-cd.yml'
-            auth:
-              - 'backend/auth-service/**'
-              - '.github/workflows/ci-cd.yml'
-            bikes:
-              - 'backend/bike-service/**'
-              - '.github/workflows/ci-cd.yml'
-            booking:
-              - 'backend/booking-service/**'
-              - '.github/workflows/ci-cd.yml'
-
-  # ── 2. Lint & Test ─────────────────────────────────────────────────────────
+  # ── 1. Unit & Lint Testing ────────────────────────────────────────────────
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -75,14 +41,14 @@ jobs:
           cd ${{ matrix.service }}
           npm ci
 
-      - name: Run Tests (if present)
+      - name: Run Tests (if defined)
         run: |
           cd ${{ matrix.service }}
           npm test --if-present
 
-  # ── 3. Build & Push Docker Images to GHCR ──────────────────────────────────
+  # ── 2. Build & Push Multi-Arch Docker Images to GHCR ──────────────────────
   build-and-push:
-    needs: [changes, test]
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -94,29 +60,18 @@ jobs:
           - name: frontend
             context: ./frontend
             image_name: bikeweb-frontend
-            should_run: ${{ needs.changes.outputs.frontend }}
           - name: api-gateway
             context: ./backend/api-gateway
             image_name: bikeweb-api-gateway
-            should_run: ${{ needs.changes.outputs.gateway }}
           - name: auth-service
             context: ./backend/auth-service
             image_name: bikeweb-auth-service
-            should_run: ${{ needs.changes.outputs.auth }}
           - name: bike-service
             context: ./backend/bike-service
             image_name: bikeweb-bike-service
-            should_run: ${{ needs.changes.outputs.bikes }}
           - name: booking-service
             context: ./backend/booking-service
             image_name: bikeweb-booking-service
-            should_run: ${{ needs.changes.outputs.booking }}
-
-    # Trigger build if specific service changed, on tag push, or manual workflow_dispatch
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
-      matrix.should_run == 'true'
 
     steps:
       - name: Checkout Code
@@ -154,13 +109,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run Trivy Vulnerability Scanner on Image
+      - name: Run Trivy Vulnerability Scan
         if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image_name }}:sha-${{ github.sha }}
           format: 'table'
-          exit-code: '0' # Non-blocking in CI initial rollout, change to 1 to enforce blocking
+          exit-code: '0'
           ignore-unfixed: true
-          vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
