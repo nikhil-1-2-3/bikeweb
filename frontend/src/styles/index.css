@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FFFDF8;
+    color: #292624;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-cherry-red text-warm-white px-6 py-3 font-semibold tracking-wide
+           hover:bg-burgundy transition-colors duration-200 cursor-pointer;
+  }
+
+  .btn-outline {
+    @apply border-2 border-gold text-gold px-6 py-3 font-semibold tracking-wide
+           hover:bg-gold hover:text-charcoal transition-colors duration-200 cursor-pointer;
+  }
+
+  .btn-charcoal {
+    @apply bg-charcoal text-warm-white px-6 py-3 font-semibold tracking-wide
+           hover:bg-opacity-80 transition-colors duration-200 cursor-pointer;
+  }
+
+  .card {
+    @apply bg-warm-white border border-cream shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  .section-title {
+    @apply font-serif text-3xl md:text-4xl text-charcoal mb-4;
+  }
+
+  .section-subtitle {
+    @apply text-gold text-sm tracking-widest uppercase font-medium mb-3;
+  }
+
+  .form-input {
+    @apply w-full border border-gray-300 bg-warm-white px-4 py-3 text-charcoal
+           focus:outline-none focus:border-cherry-red focus:ring-1 focus:ring-cherry-red
+           placeholder-gray-400 transition-colors duration-150;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-charcoal mb-1;
+  }
+
+  .status-badge {
+    @apply px-3 py-1 text-xs font-semibold uppercase tracking-wide;
+  }
+}
