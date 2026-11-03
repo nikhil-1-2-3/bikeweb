@@ -14,3 +14,4 @@ resources:
   - 07-api-gateway.yaml
   - 08-frontend.yaml
   - 09-ingress.yaml
+

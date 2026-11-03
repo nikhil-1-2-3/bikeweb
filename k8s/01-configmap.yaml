@@ -15,3 +15,4 @@ data:
   BOOKING_SERVICE_URL: "http://booking-service:4003"
   FRONTEND_URL: "http://localhost:3000,http://frontend,http://motorhouse.local"
   ALLOWED_ORIGINS: "http://localhost:3000,http://frontend,http://motorhouse.local"
+
