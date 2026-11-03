@@ -1,0 +1,180 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: motor-house
+data:
+  01_auth_db.sql: |
+    CREATE DATABASE auth_db;
+    \c auth_db;
+    CREATE TABLE IF NOT EXISTS users (
+      id          SERIAL PRIMARY KEY,
+      full_name   VARCHAR(100)  NOT NULL,
+      email       VARCHAR(255)  UNIQUE NOT NULL,
+      phone       VARCHAR(20),
+      password_hash VARCHAR(255) NOT NULL,
+      role        VARCHAR(20)   DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
+      created_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+      updated_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_users_role  ON users(role);
+    INSERT INTO users (full_name, email, phone, password_hash, role)
+    VALUES (
+      'Admin User',
+      'admin@motorhouse.com',
+      '+1-000-000-0000',
+      '$2b$10$03nscaeeM187VmYnOqFJ.eSqvx72MGXdh0EGm6RlmC2a/LWZ145JG',
+      'admin'
+    ) ON CONFLICT (email) DO NOTHING;
+
+  02_bike_db.sql: |
+    CREATE DATABASE bike_db;
+    \c bike_db;
+    CREATE TABLE IF NOT EXISTS motorcycles (
+      id               SERIAL PRIMARY KEY,
+      name             VARCHAR(150) NOT NULL,
+      brand            VARCHAR(100) NOT NULL,
+      model            VARCHAR(100) NOT NULL,
+      description      TEXT,
+      price            NUMERIC(12,2) NOT NULL,
+      engine_capacity  VARCHAR(50),
+      mileage          VARCHAR(50),
+      fuel_type        VARCHAR(50)  DEFAULT 'Petrol',
+      transmission     VARCHAR(50)  DEFAULT 'Manual',
+      image_url        TEXT,
+      availability     BOOLEAN      DEFAULT true,
+      created_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+      updated_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_motorcycles_brand        ON motorcycles(brand);
+    CREATE INDEX IF NOT EXISTS idx_motorcycles_availability ON motorcycles(availability);
+    CREATE INDEX IF NOT EXISTS idx_motorcycles_price        ON motorcycles(price);
+
+    INSERT INTO motorcycles (name, brand, model, description, price, engine_capacity, mileage, fuel_type, transmission, image_url, availability) VALUES
+    ('Sportster S', 'Harley-Davidson', 'RH1250S', 'The Sportster S is a revolution in performance and style.', 15999.00, '1252cc', '18 kmpl', 'Petrol', 'Manual', 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', true),
+    ('Iron 883', 'Harley-Davidson', 'XL883N', 'Raw, blacked-out attitude meets classic American muscle.', 9999.00, '883cc', '22 kmpl', 'Petrol', 'Manual', 'https://images.unsplash.com/photo-1547549082-6bc09f2049ae?w=800', true),
+    ('Classic 350', 'Royal Enfield', 'J Series', 'Timeless. Iconic. The Classic 350 has defined the middleweight segment for decades.', 2499.00, '349cc', '37 kmpl', 'Petrol', 'Manual', 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=800', true),
+    ('Meteor 350', 'Royal Enfield', 'Fireball', 'Born for the open road. The Meteor 350 combines a relaxed cruiser stance with modern engineering.', 2799.00, '349cc', '36 kmpl', 'Petrol', 'Manual', 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', true),
+    ('Speed Twin 900', 'Triumph', 'T900', 'The Speed Twin 900 is the perfect blend of classic Triumph heritage and contemporary performance.', 12499.00, '900cc', '20 kmpl', 'Petrol', 'Manual', 'https://images.unsplash.com/photo-1449426468159-d96dbf08f19f?w=800', true),
+    ('Bonneville T120', 'Triumph', 'T120', 'An icon reimagined. The Bonneville T120 is the pinnacle of classic British motorcycle design.', 13499.00, '1200cc', '19 kmpl', 'Petrol', 'Manual', 'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800', true),
+    ('Scout Bobber', 'Indian', 'Scout Bobber', 'American muscle with a dark soul. The Scout Bobber strips the legendary Indian Scout down to its essence.', 14299.00, '1133cc', '19 kmpl', 'Petrol', 'Manual', 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800', true),
+    ('R 1250 GS', 'BMW', 'R 1250 GS', 'The benchmark adventure tourer.', 18999.00, '1254cc', '17 kmpl', 'Petrol', 'Manual', 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800', true);
+
+  03_booking_db.sql: |
+    CREATE DATABASE booking_db;
+    \c booking_db;
+    CREATE TABLE IF NOT EXISTS appointments (
+      id               SERIAL PRIMARY KEY,
+      customer_id      INTEGER       NOT NULL,
+      bike_id          INTEGER       NOT NULL,
+      appointment_type VARCHAR(50)   NOT NULL CHECK (appointment_type IN ('showroom_visit', 'test_ride')),
+      appointment_date DATE          NOT NULL,
+      appointment_time TIME          NOT NULL,
+      customer_name    VARCHAR(100)  NOT NULL,
+      customer_phone   VARCHAR(20)   NOT NULL,
+      status           VARCHAR(30)   DEFAULT 'pending' CHECK (status IN ('pending','confirmed','cancelled','completed','rejected')),
+      notes            TEXT,
+      created_at       TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+      updated_at       TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_appointments_customer ON appointments(customer_id);
+    CREATE INDEX IF NOT EXISTS idx_appointments_date     ON appointments(appointment_date);
+    CREATE INDEX IF NOT EXISTS idx_appointments_status   ON appointments(status);
+    CREATE INDEX IF NOT EXISTS idx_appointments_bike     ON appointments(bike_id);
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: motor-house
+  labels:
+    app.kubernetes.io/name: postgres
+spec:
+  ports:
+    - port: 5432
+      name: postgres
+      targetPort: 5432
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: motor-house
+  labels:
+    app.kubernetes.io/name: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: motor-house-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: motor-house-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              value: postgres
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U postgres
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: postgres-init-scripts
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 10Gi

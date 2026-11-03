@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: motor-house-config
+  namespace: motor-house
+data:
+  NODE_ENV: "production"
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  AUTH_DB_NAME: "auth_db"
+  BIKE_DB_NAME: "bike_db"
+  BOOKING_DB_NAME: "booking_db"
+  AUTH_SERVICE_URL: "http://auth-service:4001"
+  BIKE_SERVICE_URL: "http://bike-service:4002"
+  BOOKING_SERVICE_URL: "http://booking-service:4003"
+  FRONTEND_URL: "http://localhost:3000,http://frontend,http://motorhouse.local"
+  ALLOWED_ORIGINS: "http://localhost:3000,http://frontend,http://motorhouse.local"

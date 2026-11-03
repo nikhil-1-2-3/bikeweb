@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: motor-house
+
+resources:
+  - 00-namespace.yaml
+  - 01-configmap.yaml
+  - 02-secret.yaml
+  - 03-postgres.yaml
+  - 04-auth-service.yaml
+  - 05-bike-service.yaml
+  - 06-booking-service.yaml
+  - 07-api-gateway.yaml
+  - 08-frontend.yaml
+  - 09-ingress.yaml
