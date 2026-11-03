@@ -114,3 +114,4 @@ resource "aws_security_group" "worker_sg" {
     Name = "${var.cluster_name}-worker-sg"
   }
 }
+

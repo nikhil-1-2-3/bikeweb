@@ -38,7 +38,7 @@ resource "aws_instance" "master" {
   ]
 
   root_block_device {
-    volume_size = 30
+    volume_size = 10
     volume_type = "gp3"
   }
 
@@ -66,7 +66,7 @@ resource "aws_instance" "workers" {
   ]
 
   root_block_device {
-    volume_size = 30
+    volume_size = 10
     volume_type = "gp3"
   }
 
@@ -78,3 +78,4 @@ resource "aws_instance" "workers" {
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   }
 }
+

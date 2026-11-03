@@ -37,3 +37,4 @@ resource "aws_iam_instance_profile" "k8s_node_profile" {
   name = "${var.cluster_name}-instance-profile"
   role = aws_iam_role.k8s_node_role.name
 }
+

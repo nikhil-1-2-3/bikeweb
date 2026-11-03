@@ -11,15 +11,15 @@ variable "cluster_name" {
 }
 
 variable "master_instance_type" {
-  description = "EC2 instance type for the Control Plane (master) node"
+  description = "EC2 instance type for the Control Plane (master) node (Free Tier eligible)"
   type        = string
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "worker_instance_type" {
-  description = "EC2 instance type for the Worker nodes"
+  description = "EC2 instance type for the Worker nodes (Free Tier eligible)"
   type        = string
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "worker_count" {
@@ -39,3 +39,4 @@ variable "vpc_cidr" {
   type        = string
   default     = "10.0.0.0/16"
 }
+

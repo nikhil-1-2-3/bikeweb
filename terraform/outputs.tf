@@ -25,5 +25,6 @@ output "ssh_master_command" {
 
 output "next_step_master_init" {
   description = "Command to run inside the Master node to initialize the cluster"
-  value       = "sudo kubeadm init --apiserver-advertise-address=${aws_instance.master.private_ip} --pod-network-cidr=10.244.0.0/16"
+  value       = "sudo kubeadm init --apiserver-advertise-address=${aws_instance.master.private_ip} --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors=Mem"
 }
+

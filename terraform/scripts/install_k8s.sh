@@ -44,3 +44,4 @@ apt-mark hold kubelet kubeadm kubectl
 systemctl enable kubelet
 
 echo "Kubernetes prerequisites installed successfully."
+
